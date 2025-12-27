@@ -11,7 +11,7 @@ Pipes stdin -> logfile (append) and serves:
     - since defaults to -1
     - limit defaults to 500 (max 5000)
 Response JSON:
-  { "next": <last_id_returned_or_since>, "lines": [ {"id":0,"content":"..."}, ... ] }
+  { "next": <last_id_returned_or_since>, "lines": [ {"id":0,"timestamp":1234567890,"content":"..."}, ... ] }
 EOF
 }
 
@@ -68,7 +68,17 @@ def read_from_start(since: int, limit: int):
       if cur_id <= since:
         continue
       line = raw.decode("utf-8", errors="replace").rstrip("\n")
-      out.append({"id": cur_id, "content": line})
+      if ":" in line:
+        timestamp, content = line.split(":", 1)
+        try:
+          timestamp = int(timestamp)
+        except ValueError:
+          timestamp = None
+          content = line
+      else:
+        timestamp = None
+        content = line
+      out.append({"id": cur_id, "timestamp": timestamp, "content": content})
       if len(out) >= limit:
         pos = f.tell()
         break
@@ -89,7 +99,17 @@ def read_from_pos(start_pos: int, start_id: int, limit: int):
         break
       cur_id += 1
       line = raw.decode("utf-8", errors="replace").rstrip("\n")
-      out.append({"id": cur_id, "content": line})
+      if ":" in line:
+        timestamp, content = line.split(":", 1)
+        try:
+          timestamp = int(timestamp)
+        except ValueError:
+          timestamp = None
+          content = line
+      else:
+        timestamp = None
+        content = line
+      out.append({"id": cur_id, "timestamp": timestamp, "content": content})
       if len(out) >= limit:
         pos = f.tell()
         break
@@ -162,5 +182,8 @@ trap 'kill "$SERVER_PID" >/dev/null 2>&1 || true' EXIT
 echo "logger.sh: writing to $LOGFILE" >&2
 echo "logger.sh: serving http://0.0.0.0:$PORT/logs?since=N&limit=M" >&2
 
-# Stream stdin -> logfile (append) and mirror to stderr
-tee -a "$LOGFILE" | cat >&2
+# Stream stdin -> logfile (append) with timestamps and mirror to stderr
+while IFS= read -r line; do
+  echo "$(date +%s):$line" >> "$LOGFILE"
+  echo "$line" >&2
+done
