@@ -19,13 +19,13 @@ import torch
 import tyro
 
 
-def convert_lerobot_weights(input_path: str, output_dir: str):
+def convert_lerobot_weights(input_path: str, output_dir: str = None):
     """
     Convert LeRobot weights to OpenPI format.
 
     Args:
         input_path: Path to the input safetensors file (or directory containing model.safetensors)
-        output_dir: Directory to save the converted weights
+        output_dir: Directory to save the converted weights (optional, defaults to input directory for in-place conversion)
     """
     # Handle input path - can be file or directory
     input_path = Path(input_path)
@@ -60,9 +60,12 @@ def convert_lerobot_weights(input_path: str, output_dir: str):
             converted_state_dict[key] = value
             print(f"  {key} (no change)")
 
-    # Create output directory
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # Create output directory (default to input directory for in-place conversion)
+    if output_dir is None:
+        output_dir = input_dir
+    else:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     # Save converted weights
     output_file = output_dir / "model.safetensors"

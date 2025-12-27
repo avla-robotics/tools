@@ -78,6 +78,35 @@ chmod +x "$LOGGER_PATH"
     "$UV_BIN" pip install tyro
     "$UV_BIN" pip install transformers==4.53.2
     cp -r ./src/openpi/models_pytorch/transformers_replace/* .venv/lib/python3.11/site-packages/transformers/
+
+    # Download the weight conversion script
+    echo "Downloading weight conversion script..."
+    curl -fsSL "https://raw.githubusercontent.com/avla-robotics/tools/refs/heads/main/convert_lerobot_weights.py" -o /tmp/convert_lerobot_weights.py
+  fi
+
+  # Check if weights need conversion and convert if necessary
+  if [ -f "$weights/model.safetensors" ]; then
+    echo "Checking if weights need conversion..."
+    # Try to detect if weights have 'model.' prefix by checking a few common keys
+    if .venv/bin/python3 -c "
+import safetensors
+try:
+    with safetensors.safe_open('$weights/model.safetensors', framework='pt') as f:
+        keys = list(f.keys())[:10]  # Check first 10 keys
+        has_model_prefix = any(k.startswith('model.') for k in keys)
+        if has_model_prefix:
+            print('NEEDS_CONVERSION')
+        else:
+            print('ALREADY_CONVERTED')
+except Exception as e:
+    print(f'ERROR: {e}')
+" | grep -q "NEEDS_CONVERSION"; then
+      echo "Weights need conversion. Converting in-place..."
+      .venv/bin/python3 /tmp/convert_lerobot_weights.py --input_path "$weights"
+      echo "Weight conversion completed."
+    else
+      echo "Weights are already in OpenPI format."
+    fi
   fi
 
   # Run the Python policy server (line-buffered for real-time logs)
