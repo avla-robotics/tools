@@ -17,7 +17,7 @@ OPENPI_DIR="$PROJECT_DIR/openpi"
 UV_BIN="$HOME/.local/bin/uv"
 
 # ---- Logging setup (logger.sh) ----
-LOGGER_URL="https://gist.githubusercontent.com/Skylerwiernik/1bc19c194fd6867aec666327b70a3d07/raw/0da7272cb5f575d3def5417c9c15882124096b81/logger.sh"
+LOGGER_URL="https://raw.githubusercontent.com/avla-robotics/tools/refs/heads/main/logger.sh"
 LOG_DIR="$PROJECT_DIR/logs"
 RUN_ID="${RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
 LOGFILE="$LOG_DIR/${RUN_ID}.log"
