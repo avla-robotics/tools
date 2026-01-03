@@ -86,8 +86,11 @@ def convert_lerobot_weights(input_path: str, output_dir: str = None):
         src = input_dir / filename
         if src.exists():
             dst = output_dir / filename
-            print(f"Copying {filename}")
-            shutil.copy2(src, dst)
+            if src != dst:
+                print(f"Copying {filename}")
+                shutil.copy2(src, dst)
+            else:
+                print(f"Skipping {filename} (already in output directory)")
 
     print(f"\nConversion complete! Output saved to: {output_dir}")
     print(f"Total tensors converted: {len(converted_state_dict)}")
